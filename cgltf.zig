@@ -18,13 +18,13 @@ pub const Result = enum(i32) {
     _,
 };
 pub const MemoryOption = extern struct {
-    alloc: ?fn (?*anyopaque, usize) callconv(.C) ?*anyopaque,
-    free: ?fn (?*anyopaque, ?*anyopaque) callconv(.C) void,
+    alloc: fn (*anyopaque, usize) callconv(.C) ?*anyopaque,
+    free: fn (*anyopaque, *anyopaque) callconv(.C) void,
     user_data: ?*anyopaque,
 };
 pub const FileOption = extern struct {
-    read: ?fn ([*c]const MemoryOption, [*c]const FileOption, [*c]const u8, [*c]usize, [*c]?*anyopaque) callconv(.C) Result,
-    release: ?fn ([*c]const MemoryOption, [*c]const FileOption, ?*anyopaque) callconv(.C) void,
+    read: fn (*const MemoryOption, *const FileOption, [*:0]const u8, [*c]usize, [*c]?*anyopaque) callconv(.C) Result,
+    release: fn (*const MemoryOption, *const FileOption, ?*anyopaque) callconv(.C) void,
     user_data: ?*anyopaque,
 };
 pub const Option = extern struct {
@@ -126,18 +126,18 @@ pub const Extra = extern struct {
     end_offset: usize,
 };
 pub const Extensions = extern struct {
-    name: [*c]u8,
+    name: [*:0]u8,
     data: [*c]u8,
 };
 pub const Buffer = extern struct {
-    name: [*:0]u8,
+    name: ?[*:0]u8,
     size: usize,
     uri: [*:0]u8,
     data: ?*anyopaque,
     data_free_method: DataFreeMethod,
     extras: Extra,
     extensions_count: usize,
-    extensions: [*]Extensions,
+    extensions: ?[*]Extensions,
 };
 pub const CompressionMode = enum(i32) {
     invalid = 0,
@@ -152,7 +152,7 @@ pub const CompressionFilter = enum(i32) {
     exponential = 3,
 };
 pub const MeshoptCompression = extern struct {
-    buffer: [*c]Buffer,
+    buffer: *Buffer,
     offset: usize,
     size: usize,
     stride: usize,
@@ -161,7 +161,7 @@ pub const MeshoptCompression = extern struct {
     filter: CompressionFilter,
 };
 pub const BufferView = extern struct {
-    name: [*:0]u8,
+    name: ?[*:0]u8,
     buffer: *Buffer,
     offset: usize,
     size: usize,
@@ -172,27 +172,27 @@ pub const BufferView = extern struct {
     meshopt_compression: MeshoptCompression,
     extras: Extra,
     extensions_count: usize,
-    extensions: [*c]Extensions,
+    extensions: ?[*]Extensions,
 };
 pub const AccessorSparse = extern struct {
     count: usize,
-    indices_buffer_view: [*c]BufferView,
+    indices_buffer_view: *BufferView,
     indices_byte_offset: usize,
     indices_component_type: ComponentType,
-    values_buffer_view: [*c]BufferView,
+    values_buffer_view: *BufferView,
     values_byte_offset: usize,
     extras: Extra,
     indices_extras: Extra,
     values_extras: Extra,
     extensions_count: usize,
-    extensions: [*c]Extensions,
+    extensions: ?[*]Extensions,
     indices_extensions_count: usize,
-    indices_extensions: [*c]Extensions,
+    indices_extensions: ?[*]Extensions,
     values_extensions_count: usize,
-    values_extensions: [*c]Extensions,
+    values_extensions: ?[*]Extensions,
 };
 pub const Accessor = extern struct {
-    name: [*:0]u8,
+    name: ?[*:0]u8,
     component_type: ComponentType,
     normalized: bool,
     type: Type,
@@ -208,22 +208,22 @@ pub const Accessor = extern struct {
     sparse: AccessorSparse,
     extras: Extra,
     extensions_count: usize,
-    extensions: [*]Extensions,
+    extensions: ?[*]Extensions,
 };
 pub const Attribute = extern struct {
-    name: [*:0]u8,
+    name: ?[*:0]u8,
     type: AttributeType,
     index: i32,
     data: *Accessor,
 };
 pub const Image = extern struct {
-    name: [*:0]u8,
+    name: ?[*:0]u8,
     uri: [*:0]u8,
     buffer_view: *BufferView,
     mime_type: [*:0]u8,
     extras: Extra,
     extensions_count: usize,
-    extensions: [*]Extensions,
+    extensions: ?[*]Extensions,
 };
 pub const Sampler = extern struct {
     name: [*:0]u8,
@@ -236,7 +236,7 @@ pub const Sampler = extern struct {
     extensions: ?[*]Extensions,
 };
 pub const Texture = extern struct {
-    name: [*:0]u8,
+    name: ?[*:0]u8,
     image: *Image,
     sampler: *Sampler,
     has_basisu: bool,
@@ -313,7 +313,7 @@ pub const EmissiveStrength = extern struct {
     emissive_strength: f32,
 };
 pub const Material = extern struct {
-    name: [*c]u8,
+    name: ?[*:0]u8,
     has_pbr_metallic_roughness: bool,
     has_pbr_specular_glossiness: bool,
     has_clearcoat: bool,
@@ -342,20 +342,20 @@ pub const Material = extern struct {
     unlit: bool,
     extras: Extra,
     extensions_count: usize,
-    extensions: [*c]Extensions,
+    extensions: ?[*]Extensions,
 };
 pub const MaterialMapping = extern struct {
     variant: usize,
-    material: [*c]Material,
+    material: *Material,
     extras: Extra,
 };
 pub const MorphTarget = extern struct {
-    attributes: [*c]Attribute,
+    attributes: [*]Attribute,
     attributes_count: usize,
 };
 pub const DracoMeshCompression = extern struct {
-    buffer_view: [*c]BufferView,
-    attributes: [*c]Attribute,
+    buffer_view: *BufferView,
+    attributes: [*]Attribute,
     attributes_count: usize,
 };
 pub const Primitive = extern struct {
@@ -372,7 +372,7 @@ pub const Primitive = extern struct {
     mappings: [*]MaterialMapping,
     mappings_count: usize,
     extensions_count: usize,
-    extensions: [*]Extensions,
+    extensions: ?[*]Extensions,
 };
 pub const Mesh = extern struct {
     name: [*:0]u8,
@@ -380,21 +380,21 @@ pub const Mesh = extern struct {
     primitives_count: usize,
     weights: [*]f32,
     weights_count: usize,
-    target_names: [*c][*c]u8,
+    target_names: [*][*:0]u8,
     target_names_count: usize,
     extras: Extra,
     extensions_count: usize,
-    extensions: [*]Extensions,
+    extensions: ?[*]Extensions,
 };
 pub const Skin = extern struct {
-    name: [*c]u8,
-    joints: [*c][*c]Node,
+    name: ?[*:0]u8,
+    joints: [*]*Node,
     joints_count: usize,
-    skeleton: [*c]Node,
-    inverse_bind_matrices: [*c]Accessor,
+    skeleton: *Node,
+    inverse_bind_matrices: *Accessor,
     extras: Extra,
     extensions_count: usize,
-    extensions: [*c]Extensions,
+    extensions: ?[*]Extensions,
 };
 pub const CameraPerspective = extern struct {
     has_aspect_ratio: bool,
@@ -417,15 +417,15 @@ const CameraMode = extern union {
     orthographic: CameraOrthographic,
 };
 pub const Camera = extern struct {
-    name: [*c]u8,
+    name: ?[*:0]u8,
     type: CameraType,
     data: CameraMode,
     extras: Extra,
     extensions_count: usize,
-    extensions: [*c]Extensions,
+    extensions: ?[*]Extensions,
 };
 pub const Light = extern struct {
-    name: [*c]u8,
+    name: ?[*:0]u8,
     color: [3]f32,
     intensity: f32,
     type: LightType,
@@ -435,15 +435,15 @@ pub const Light = extern struct {
     extras: Extra,
 };
 pub const Node = extern struct {
-    name: [*c]u8,
-    parent: [*c]Node,
-    children: [*c][*c]Node,
+    name: ?[*:0]u8,
+    parent: *Node,
+    children: [*]*Node,
     children_count: usize,
-    skin: [*c]Skin,
-    mesh: [*c]Mesh,
-    camera: [*c]Camera,
-    light: [*c]Light,
-    weights: [*c]f32,
+    skin: *Skin,
+    mesh: *Mesh,
+    camera: *Camera,
+    light: *Light,
+    weights: [*]f32,
     weights_count: usize,
     has_translation: bool,
     has_rotation: bool,
@@ -455,44 +455,44 @@ pub const Node = extern struct {
     matrix: [16]f32,
     extras: Extra,
     extensions_count: usize,
-    extensions: [*c]Extensions,
+    extensions: ?[*]Extensions,
 };
 pub const Scene = extern struct {
-    name: [*c]u8,
-    nodes: [*c][*c]Node,
+    name: ?[*:0]u8,
+    nodes: [*]*Node,
     nodes_count: usize,
     extras: Extra,
     extensions_count: usize,
-    extensions: [*c]Extensions,
+    extensions: ?[*]Extensions,
 };
 pub const AnimationSampler = extern struct {
-    input: [*c]Accessor,
-    output: [*c]Accessor,
+    input: *Accessor,
+    output: *Accessor,
     interpolation: InterpolationType,
     extras: Extra,
     extensions_count: usize,
-    extensions: [*c]Extensions,
+    extensions: ?[*]Extensions,
 };
 pub const AnimationChannel = extern struct {
-    sampler: [*c]AnimationSampler,
-    target_node: [*c]Node,
+    sampler: *AnimationSampler,
+    target_node: *Node,
     target_path: AnimationPathType,
     extras: Extra,
     extensions_count: usize,
-    extensions: [*c]Extensions,
+    extensions: ?[*]Extensions,
 };
 pub const Animation = extern struct {
-    name: [*c]u8,
-    samplers: [*c]AnimationSampler,
+    name: ?[*:0]u8,
+    samplers: [*]AnimationSampler,
     samplers_count: usize,
-    channels: [*c]AnimationChannel,
+    channels: [*]AnimationChannel,
     channels_count: usize,
     extras: Extra,
     extensions_count: usize,
-    extensions: [*c]Extensions,
+    extensions: ?[*:0]Extensions,
 };
 pub const MaterialVariant = extern struct {
-    name: [*:0]u8,
+    name: ?[*:0]u8,
     extras: Extra,
 };
 pub const Asset = extern struct {
@@ -502,7 +502,7 @@ pub const Asset = extern struct {
     min_version: [*:0]u8,
     extras: Extra,
     extensions_count: usize,
-    extensions: [*]Extensions,
+    extensions: ?[*:0]Extensions,
 };
 pub const Data = extern struct {
     file_type: FileType,
@@ -541,10 +541,10 @@ pub const Data = extern struct {
     variants_count: usize,
     extras: Extra,
     data_extensions_count: usize,
-    data_extensions: [*c]Extensions,
-    extensions_used: [*c][*c]u8,
+    data_extensions: ?[*]Extensions,
+    extensions_used: [*][*:0]u8,
     extensions_used_count: usize,
-    extensions_required: [*c][*c]u8,
+    extensions_required: [*][*:0]u8,
     extensions_required_count: usize,
     json: [*]const u8,
     json_size: usize,
@@ -556,16 +556,16 @@ pub const Data = extern struct {
 pub extern fn cgltf_parse(options: *const Option, data: *const anyopaque, size: usize, out_data: **Data) Result;
 pub extern fn cgltf_parse_file(options: *const Option, path: [*:0]const u8, out_data: **Data) Result;
 pub extern fn cgltf_load_buffers(options: *const Option, data: *Data, gltf_path: [*:0]const u8) Result;
-pub extern fn cgltf_load_buffer_base64(options: [*c]const Option, size: usize, base64: [*c]const u8, out_data: [*c]?*anyopaque) Result;
-pub extern fn cgltf_decode_string(string: [*c]u8) usize;
-pub extern fn cgltf_decode_uri(uri: [*c]u8) usize;
-pub extern fn cgltf_validate(data: [*c]Data) Result;
+pub extern fn cgltf_load_buffer_base64(options: *const Option, size: usize, base64: [*c]const u8, out_data: [*c]?*anyopaque) Result;
+pub extern fn cgltf_decode_string(string: [*:0]u8) usize;
+pub extern fn cgltf_decode_uri(uri: [*:0]u8) usize;
+pub extern fn cgltf_validate(data: *Data) Result;
 pub extern fn cgltf_free(data: *Data) void;
-pub extern fn cgltf_node_transform_local(node: [*c]const Node, out_matrix: [*c]f32) void;
-pub extern fn cgltf_node_transform_world(node: [*c]const Node, out_matrix: [*c]f32) void;
-pub extern fn cgltf_accessor_read_float(accessor: [*c]const Accessor, index: usize, out: [*c]f32, element_size: usize) bool;
-pub extern fn cgltf_accessor_read_uint(accessor: [*c]const Accessor, index: usize, out: [*c]u32, element_size: usize) bool;
-pub extern fn cgltf_accessor_read_index(accessor: [*c]const Accessor, index: usize) usize;
+pub extern fn cgltf_node_transform_local(node: *const Node, out_matrix: [*]f32) void;
+pub extern fn cgltf_node_transform_world(node: *const Node, out_matrix: [*]f32) void;
+pub extern fn cgltf_accessor_read_float(accessor: *const Accessor, index: usize, out: *f32, element_size: usize) bool;
+pub extern fn cgltf_accessor_read_uint(accessor: *const Accessor, index: usize, out: *u32, element_size: usize) bool;
+pub extern fn cgltf_accessor_read_index(accessor: *const Accessor, index: usize) usize;
 pub extern fn cgltf_num_components(@"type": Type) usize;
-pub extern fn cgltf_accessor_unpack_floats(accessor: [*c]const Accessor, out: [*c]f32, float_count: usize) usize;
+pub extern fn cgltf_accessor_unpack_floats(accessor: *const Accessor, out: [*]f32, float_count: usize) usize;
 pub extern fn cgltf_copy_extras_json(data: [*c]const Data, extras: [*c]const Extra, dest: [*c]u8, dest_size: [*c]usize) Result;
